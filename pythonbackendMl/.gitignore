@@ -1,0 +1,83 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Jupyter Notebook
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Datasets
+# =========================
+dataset/
+datasets/
+data/
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+
+# =========================
+# ML Models / Checkpoints
+# =========================
+checkpoints/
+models/
+*.keras
+*.h5
+*.hdf5
+*.pth
+*.pt
+*.ckpt
+*.onnx
+
+# =========================
+# TensorFlow / Keras
+# =========================
+logs/
+tensorboard/
+*.tfevents.*
+
+# =========================
+# Python / ML cache
+# =========================
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Generated files
+# =========================
+*.log
+*.tmp
+*.temp
