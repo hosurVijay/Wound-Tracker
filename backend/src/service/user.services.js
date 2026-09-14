@@ -32,5 +32,5 @@ export {
     isPassowrdCorrect,
     hashPassword,
     generateAccessToken,
-    generateAccessToken
+    generateRefreshToken
 }
