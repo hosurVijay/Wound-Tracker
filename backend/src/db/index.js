@@ -5,6 +5,9 @@ const connectionInstance = mysql.createConnection({
         database: process.env.DB_DATABASE,
         password : process.env.DB_PASSWORD
     })
+
+const db = connectionInstance.promise();
+
 const connectDb = async() => {
     try {  
     connectionInstance.connect((err) => {
@@ -22,4 +25,4 @@ const connectDb = async() => {
     }
 }
 
-export {connectDb}
+export {connectDb, db}
