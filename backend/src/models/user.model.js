@@ -103,6 +103,21 @@ const updateProfileImage = async(profileImageUrl ,email) =>{
 
 }
 
+const updatePassword = async(password, userId) => {
+    const query = `
+        UPDATE users
+            SET password_hashed = ?
+        where id = ?
+    `;
+
+    const [result] = await db.execute(
+        query,
+        [password, userId]
+    )
+
+    return result
+}
+
 
 export {
     updateProfileImage,
@@ -110,5 +125,6 @@ export {
     findUserById,
     updateUser,
     deleteUser,
-    createUser
+    createUser,
+    updatePassword
 }
