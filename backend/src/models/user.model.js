@@ -1,62 +1,59 @@
 import { connectionInstance as db } from "../db/index.js";
 
 const createUser = async (name, email, password, phoneNumber, dob) => {
-    try {
-            const query = `
+  try {
+    const query = `
         INSERT INTO users
         (name, email, password_hashed, phoneNumber, date_of_birth)
         VALUES(?, ?, ?, ?, ?)
     `;
 
-    const [result] = await db.execute(
-        query,
-        [name, email, password, phoneNumber, dob]
-    );
+    const [result] = await db.execute(query, [
+      name,
+      email,
+      password,
+      phoneNumber,
+      dob,
+    ]);
 
-    return result
-    } catch (error) {
-        console.log("Creation of  user operation failed")
-        throw error
-    }
-}
+    return result;
+  } catch (error) {
+    console.log("Creation of  user operation failed");
+    throw error;
+  }
+};
 
 const findUserByEmail = async (email) => {
-    try {
-        const query = `
+  try {
+    const query = `
         SELECT *
         FROM users
         WHERE email = ?
     `;
 
-    const [res] = await db.execute(
-        query,
-        [email]
-    )
+    const [res] = await db.execute(query, [email]);
 
     return res;
-    } catch (error) {
-        console.log("find user by email failed")
-        throw error
-    }
-}
+  } catch (error) {
+    console.log("find user by email failed");
+    throw error;
+  }
+};
 
 const findUserById = async (id) => {
-    const query = `
+  const query = `
         SELECT *
         FROM users
         where id = ?
     `;
 
-    const [res] = await db.execute(
-        query,
-        [id]
-    )
+  const [res] = await db.execute(query, [id]);
 
-    return res;
-}
+  return res;
+};
 
-const updateUser = async(id, name, phoneNumber, dob) => {
-    const query = `
+const updateUser = async (id, name, phoneNumber, dob) => {
+  const query = `
         UPDATE users 
         SET 
             name = ?,
@@ -64,67 +61,117 @@ const updateUser = async(id, name, phoneNumber, dob) => {
             date_of_birth = ?,
         Where Id = ? ,
     `;
-    const [res] = await db.execute(
-        query,
-        [name, phoneNumber, dob, id]
-    )
+  const [res] = await db.execute(query, [name, phoneNumber, dob, id]);
 
-    return res
-}
+  return res;
+};
 
 const deleteUser = async (id) => {
-    const query = `
+  const query = `
         DELETE FROM users
         WHERE id = ?
-    `
+    `;
 
-    const [res] = await db.execute(
-        query,
-        [id]
-    )
+  const [res] = await db.execute(query, [id]);
 
-    return res
-}
+  return res;
+};
 
-const updateProfileImage = async(profileImageUrl ,email) =>{
-    const query = `
+const updateProfileImage = async (profileImageUrl, email) => {
+  const query = `
         UPDATE users
         SET
             profileImage = ?,
         WHERE email = ?
     `;
 
-    const [res] = await db.execute(
-        query,
-        [profileImageUrl, email]
-    )
+  const [res] = await db.execute(query, [profileImageUrl, email]);
 
-    return res
+  return res;
+};
 
-}
-
-const updatePassword = async(password, userId) => {
-    const query = `
+const updatePassword = async (password, userId) => {
+  const query = `
         UPDATE users
             SET password_hashed = ?
         where id = ?
     `;
 
-    const [result] = await db.execute(
-        query,
-        [password, userId]
-    )
+  const [result] = await db.execute(query, [password, userId]);
 
-    return result
-}
+  return result;
+};
 
+const createPasswordReset = async (userId, otpHash, expiresAt) => {
+  const query = `
+        INSERT INTO password_reset_otps
+            (user_id, otp_hash, expiresAt)
+            VALUES(?, ? , ?)
+    `;
+  const [result] = await db.execute(query, [userId, otpHash, expiresAt]);
+
+  return result;
+};
+
+const findLatestPasswordResetOtp = async (userId) => {
+  const query = `
+        SELECT * 
+        FROM password_reset_otps
+        WHERE user_id = ? 
+            AND isUsed = FALSE
+            AND attempts < 3
+        ORDER BY sentAt DESC
+        LIMIT 1
+    `;
+
+  const [result] = await db.execute(query, [userId]);
+
+  return result;
+};
+
+const incrementOtpAttempts = async (otpId) => {
+  const query = `
+        UPDATE password_reset_otps
+            SET attempts = attempts + 1
+        WHERE id = ?
+    `;
+
+  const [result] = await db.execute(query, [otpId]);
+
+  return result;
+};
+
+const resetOtpAttempts = async (otpId) => {
+  const query = `
+        UPDATE password_reset_otps
+            SET attempts = 0
+        WHERE id = ?
+    `;
+  const [result] = await db.execute(query, [otpId]);
+  return result;
+};
+
+const markOTPused = async (otpId) => {
+  const query = `
+        UPDATE password_reset_otps
+            SET isUsed = ?
+        WHERE id = ?
+    `;
+  const [result] = await db.execute(query, [true, otpId]);
+  return result;
+};
 
 export {
-    updateProfileImage,
-    findUserByEmail,
-    findUserById,
-    updateUser,
-    deleteUser,
-    createUser,
-    updatePassword
-}
+  updateProfileImage,
+  findUserByEmail,
+  findUserById,
+  updateUser,
+  deleteUser,
+  createUser,
+  updatePassword,
+  createPasswordReset,
+  findLatestPasswordResetOtp,
+  markOTPused,
+  resetOtpAttempts,
+  incrementOtpAttempts,
+};
