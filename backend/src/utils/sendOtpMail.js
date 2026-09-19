@@ -72,3 +72,5 @@ const sendMailOtp = async (email, otp) => {
     }
   }
 };
+
+export { sendMailOtp };

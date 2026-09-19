@@ -1,4 +1,4 @@
-const genreteOTP = function () {
+const generateOTP = function () {
   try {
     const otp = Math.floor(1000 + Math.random() * 9000);
     // console.log(otp);
@@ -9,4 +9,4 @@ const genreteOTP = function () {
 };
 
 // genreteOTP();
-export { genreteOTP };
+export { generateOTP };
