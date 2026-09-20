@@ -1,28 +1,46 @@
-import mysql from 'mysql2'
+import mysql from "mysql2";
 const connectionInstance = mysql.createConnection({
-        host: 'localhost',
-        user: process.env.DB_USER,
-        database: process.env.DB_DATABASE,
-        password : process.env.DB_PASSWORD
-    })
+  host: "localhost",
+  user: process.env.DB_USER,
+  database: process.env.DB_DATABASE,
+  password: process.env.DB_PASSWORD,
+});
 
 const db = connectionInstance.promise();
 
-const connectDb = async() => {
-    try {  
+const connectDb = async () => {
+  try {
     connectionInstance.connect((err) => {
-        if (!err) {
-        console.log("mysql connection succesfully")
-        }else{
-            console.log("connection error MYSQL", err)
-        }
-    })
-    
-    return connectionInstance
-    } catch (error) {
-        console.log("connection with mysql failed! Try again", error);
-        process.exit(1)
-    }
-}
+      if (!err) {
+        console.log("mysql connection succesfully");
+      } else {
+        console.log("connection error MYSQL", err);
+      }
+    });
 
-export {connectDb, db}
+    return connectionInstance;
+  } catch (error) {
+    console.log("connection with mysql failed! Try again", error);
+    process.exit(1);
+  }
+};
+
+const beginTransaction = async () => {
+  await connectionInstance.beginTransaction();
+};
+
+const commitTransaction = async () => {
+  await connectionInstance.commit();
+};
+
+const rollBackTransaction = async () => {
+  await connectionInstance.rollback();
+};
+
+export {
+  connectDb,
+  db,
+  beginTransaction,
+  commitTransaction,
+  rollBackTransaction,
+};

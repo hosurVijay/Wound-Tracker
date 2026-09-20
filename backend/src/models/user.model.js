@@ -1,4 +1,4 @@
-import { connectionInstance as db } from "../db/index.js";
+import { db } from "../db/index.js";
 
 const createUser = async (name, email, password, phoneNumber, dob) => {
   try {
