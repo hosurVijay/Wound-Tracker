@@ -367,8 +367,9 @@ export {
   verifyOtp,
   resetPassword,
   forgotPassword,
-  resetPassword,
   getCurrentUser,
   updateUserDetails,
   deleteAccount,
+  logoutUser,
+  updateProfileImage,
 };

@@ -19,11 +19,12 @@ import {
   rollBackTransaction,
 } from "../db/index.js";
 import {
+  createWoundAnalysis,
   findAllAnalysisByWoundId,
   findAnalysisByImageId,
   findLatestAnalysisByWoundId,
 } from "../models/woundAnalysis.model.js";
-import axios from "axios";
+import axios, { create } from "axios";
 import { calculateWoundChange } from "../service/woundAnalysis.service.js";
 import { getWoundNotify } from "../service/notification.service.js";
 import { createNotification } from "../models/notification.model.js";
@@ -273,4 +274,150 @@ const addWoundImage = asyncHandler(async (req, res) => {
     );
 });
 
-export { getUserAllWounds, getWoundDetails, addWoundImage };
+const uploadWoundImage = asyncHandler(async (req, res) => {
+  const userId = req.user?.id;
+  const { woundId, woundType } = req.body;
+
+  if (!req.file?.cloudinaryUrl) {
+    throw new ApiError(400, "wound image is required");
+  }
+
+  let wound;
+  let previousAnalysis = [];
+  if (woundId) {
+    wound = await findWoundById(woundId);
+    if (wound.length === 0) {
+      throw new ApiError(404, "wound not found");
+    }
+    if (wound[0].user_id !== userId) {
+      throw new ApiError(403, "Not authorized to access");
+    }
+    previousAnalysis = await findAllAnalysisByWoundId(woundId);
+  } else {
+    if (!woundType) {
+      throw new ApiError(400, "Wound type is required");
+    }
+  }
+  const previousWoundArea =
+    previousAnalysis.length > 0 ? previousAnalysis[0].new_wound_area : null;
+  const previousHealthyArea =
+    previousAnalysis[0].length > 0
+      ? previousAnalysis[0].new_healthy_area
+      : null;
+
+  let mlResponse;
+  try {
+    mlResponse = await axios.post(`${process.env.ML_API_PATH}/predict`, {
+      imageUrl: req.file.cloudinaryUrl,
+    });
+  } catch (error) {
+    console.error("FastApi wound prediction failed - retry", error.message);
+  }
+
+  const { maskUrl, diceScore, woundArea, healthyArea } = mlResponse.data;
+
+  const woundChange = calculateWoundChange(previousWoundArea, woundArea);
+  const notification = getWoundNotify(
+    woundChange.changePercentage,
+    woundChange.isWorsening,
+  );
+
+  let finalWoundId;
+  let imageId;
+  let analysisId;
+  try {
+    await beginTransaction();
+    if (!woundId) {
+      const newWound = await createWound(userId, woundType);
+      if (newWound.length === 0) {
+        throw new ApiError(500, "Failed to create wound");
+      }
+      finalWoundId = newWound.insertId;
+    } else {
+      finalWoundId = woundId;
+    }
+
+    const newImage = await createWoundImage(
+      finalWoundId,
+      req.file?.cloudinaryUrl,
+    );
+    if (newImage.affectedRows === 0) {
+      throw new ApiError(500, " failed to save wound image");
+    }
+    imageId = newImage.insertId;
+    const analysis = await createWoundAnalysis(
+      imageId,
+      maskUrl,
+      diceScore,
+      woundArea,
+      healthyArea,
+      previousWoundArea,
+      previousHealthyArea,
+      woundChange.changeArea,
+    );
+
+    if (analysis.affectedRows === 0) {
+      throw new ApiError(500, "Failed to save wound analysis");
+    }
+
+    analysisId = analysis.insertId;
+    if (notification) {
+      let scheduledAt = null;
+      scheduledAt = new Date();
+      scheduledAt.setDate(scheduledAt.getDate() + notification.scheduledDays);
+    }
+
+    await createNotification(
+      userId,
+      finalWoundId,
+      analysisId,
+      notification.notificationType,
+      notification.message,
+      scheduledAt,
+    );
+
+    await commitTransaction();
+  } catch (error) {
+    await rollBackTransaction();
+    throw error;
+  }
+
+  const responsePayload = {
+    woundId: finalWoundId,
+    imageId,
+    analysisId,
+    imageUrl: req.file.cloudinaryUrl,
+    analysis: {
+      maskUrl,
+      diceScore,
+      woundArea,
+      healthyArea,
+      previousWoundArea,
+      changeArea: woundChange.changeArea,
+      changePercentage: woundChange.changePercentage,
+      isWorsening: woundChange.isWorsening,
+    },
+    notification: notification
+      ? {
+          type: notification.notificationType,
+          message: notification.message,
+          scheduledDays: notification.scheduledDays,
+        }
+      : null,
+  };
+
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(201, "Wound image uploaed and analyzed successfully"),
+      responsePayload,
+    );
+});
+
+export {
+  getUserAllWounds,
+  getWoundDetails,
+  addWoundImage,
+  createUserWound,
+  uploadWoundImage,
+};
