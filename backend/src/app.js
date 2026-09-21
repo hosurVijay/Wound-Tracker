@@ -20,6 +20,10 @@ app.use("/api/v1/users", userRoute);
 
 // wound api import
 import woundRoute from "./routes/wound.route.js";
-app.use("api/v1/wounds", woundRoute);
+app.use("/api/v1/wounds", woundRoute);
+
+// notification api import
+import notificationRoute from "./routes/notification.route.js";
+app.use("/api/v1/notification", notificationRoute);
 
 export { app };

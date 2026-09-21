@@ -24,7 +24,7 @@ const markAsRead = asyncHandler(async (req, res) => {
   if (result.affectedRows === 0) {
     throw new ApiError(500, "Notification not found or unauthorized");
   }
-  return res.status(200).json(200, "Notification marked", null);
+  return res.status(200).json(new ApiError(200, "Notification marked", null));
 });
 
 export { getUserNotifications, markAsRead };
