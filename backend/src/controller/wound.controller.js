@@ -314,7 +314,7 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
     console.error("FastApi wound prediction failed - retry", error.message);
   }
 
-  const { maskUrl, diceScore, woundArea, healthyArea } = mlResponse.data;
+  const { maskUrl, confidence, woundArea, healthyArea } = mlResponse.data;
 
   const woundChange = calculateWoundChange(previousWoundArea, woundArea);
   const notification = getWoundNotify(
@@ -348,7 +348,7 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
     const analysis = await createWoundAnalysis(
       imageId,
       maskUrl,
-      diceScore,
+      confidence,
       woundArea,
       healthyArea,
       previousWoundArea,
@@ -389,7 +389,7 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
     imageUrl: req.file.cloudinaryUrl,
     analysis: {
       maskUrl,
-      diceScore,
+      confidence,
       woundArea,
       healthyArea,
       previousWoundArea,

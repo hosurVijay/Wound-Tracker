@@ -3,7 +3,7 @@ import { db } from "../db/index.js";
 const createWoundAnalysis = async (
   imageId,
   maskUrl,
-  diceScore,
+  predictionConfidence,
   newWoundArea,
   newHealthyArea,
   previousWoundArea,
@@ -22,7 +22,7 @@ const createWoundAnalysis = async (
   const [result] = await db.execute(query, [
     imageId,
     maskUrl,
-    diceScore,
+    predictionConfidence,
     newWoundArea,
     newHealthyArea,
     previousWoundArea,
