@@ -24,6 +24,6 @@ app.use("/api/v1/wounds", woundRoute);
 
 // notification api import
 import notificationRoute from "./routes/notification.route.js";
-app.use("/api/v1/notification", notificationRoute);
+app.use("/api/v1/notifications", notificationRoute);
 
 export { app };

@@ -26,15 +26,15 @@ const connectDb = async () => {
 };
 
 const beginTransaction = async () => {
-  await connectionInstance.beginTransaction();
+  await db.beginTransaction();
 };
 
 const commitTransaction = async () => {
-  await connectionInstance.commit();
+  await db.commit();
 };
 
 const rollBackTransaction = async () => {
-  await connectionInstance.rollback();
+  await db.rollback();
 };
 
 export {

@@ -7,15 +7,16 @@ const getWoundNotify = (changePercentage, isWorsening) => {
     return null;
   }
 
-  if (changePercentage > 50) {
+  if (changePercentage >= 70) {
     return {
-      notificationType: "Follow Up After 5 days",
-      message: "upload the next wound image after 5 days",
-      scheduledDays: 2,
+      notificationType: "Clinical Vist",
+      message:
+        "Please visit a clinic for further assessment as soon as possible",
+      scheduledDays: null,
     };
   }
 
-  if (changePercentage > 70) {
+  if (changePercentage >= 50) {
     return {
       notificationType: "Follow Up After 2 days",
       message: "upload the next wound image after 2 days",
@@ -24,9 +25,9 @@ const getWoundNotify = (changePercentage, isWorsening) => {
   }
 
   return {
-    notificationType: "Clinical Visit",
-    message: "Please visit a clinic for further assessment as soon as possible",
-    scheduledDays: 2,
+    notificationType: "Follow up after 5 days",
+    message: "upload the next wound image after 5 days",
+    scheduledDays: 5,
   };
 };
 

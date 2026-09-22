@@ -114,12 +114,17 @@ const getUserAllWounds = asyncHandler(async (req, res) => {
 const getWoundDetails = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
   const { woundId } = req.params;
+
+  console.log("🔥 GET WOUND DETAILS CALLED");
+  console.log("METHOD:", req.method);
+  console.log("URL:", req.originalUrl);
+  console.log("PARAMS:", req.params);
   const wound = await findWoundById(woundId);
   if (wound.length === 0) {
     throw new ApiError(404, "Wound not found");
   }
 
-  if (wound[0].id != req.user?.id) {
+  if (wound[0].user_id != req.user?.id) {
     throw new ApiError(403, "Not authorized to access this wound or account");
   }
   const images = await findImagesByWoundId(wound[0].id);
@@ -277,6 +282,9 @@ const addWoundImage = asyncHandler(async (req, res) => {
 const uploadWoundImage = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
   const { woundId, woundType } = req.body;
+  console.log("BODY:", req.body);
+  console.log("woundId:", req.body.woundId);
+  console.log("woundType:", req.body.woundType);
 
   if (!req.file?.cloudinaryUrl) {
     throw new ApiError(400, "wound image is required");
@@ -292,7 +300,7 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
     if (wound[0].user_id !== userId) {
       throw new ApiError(403, "Not authorized to access");
     }
-    previousAnalysis = await findAllAnalysisByWoundId(woundId);
+    previousAnalysis = await findLatestAnalysisByWoundId(woundId);
   } else {
     if (!woundType) {
       throw new ApiError(400, "Wound type is required");
@@ -301,9 +309,7 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
   const previousWoundArea =
     previousAnalysis.length > 0 ? previousAnalysis[0].new_wound_area : null;
   const previousHealthyArea =
-    previousAnalysis[0].length > 0
-      ? previousAnalysis[0].new_healthy_area
-      : null;
+    previousAnalysis.length > 0 ? previousAnalysis[0].new_healthy_area : null;
 
   let mlResponse;
   try {
@@ -311,7 +317,11 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
       imageUrl: req.file.cloudinaryUrl,
     });
   } catch (error) {
-    console.error("FastApi wound prediction failed - retry", error.message);
+    console.error(
+      "FastApi wound prediction failed - retry",
+      error.response?.data || error.message,
+    );
+    throw new ApiError(502, "Wound analysis service is unavaliable");
   }
 
   const { maskUrl, confidence, woundArea, healthyArea } = mlResponse.data;
@@ -329,7 +339,7 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
     await beginTransaction();
     if (!woundId) {
       const newWound = await createWound(userId, woundType);
-      if (newWound.length === 0) {
+      if (newWound.affectedRows === 0) {
         throw new ApiError(500, "Failed to create wound");
       }
       finalWoundId = newWound.insertId;
@@ -363,18 +373,20 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
     analysisId = analysis.insertId;
     if (notification) {
       let scheduledAt = null;
-      scheduledAt = new Date();
-      scheduledAt.setDate(scheduledAt.getDate() + notification.scheduledDays);
-    }
+      if (notification.scheduledDays !== null) {
+        scheduledAt = new Date();
+        scheduledAt.setDate(scheduledAt.getDate() + notification.scheduledDays);
+      }
 
-    await createNotification(
-      userId,
-      finalWoundId,
-      analysisId,
-      notification.notificationType,
-      notification.message,
-      scheduledAt,
-    );
+      await createNotification(
+        userId,
+        finalWoundId,
+        analysisId,
+        notification.notificationType,
+        notification.message,
+        scheduledAt,
+      );
+    }
 
     await commitTransaction();
   } catch (error) {
@@ -392,6 +404,7 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
       confidence,
       woundArea,
       healthyArea,
+      previousHealthyArea,
       previousWoundArea,
       changeArea: woundChange.changeArea,
       changePercentage: woundChange.changePercentage,
@@ -409,8 +422,11 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(
-      new ApiResponse(201, "Wound image uploaed and analyzed successfully"),
-      responsePayload,
+      new ApiResponse(
+        201,
+        "Wound image uploaed and analyzed successfully",
+        responsePayload,
+      ),
     );
 });
 

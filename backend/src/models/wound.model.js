@@ -3,7 +3,7 @@ import { db } from "../db/index.js";
 const createWound = async (userId, woundType) => {
   const query = `
         INSERT INTO wounds
-        (userId, wound_type)
+        (user_id, wound_type)
         VALUES(? , ?)
     `;
 

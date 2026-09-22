@@ -12,26 +12,30 @@ import {
 } from "../models/user.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   generateAccessToken,
   hashPassword,
   isPassowrdCorrect,
   generateRefreshToken,
-} from "../service/user.services.js";
+} from "../service/user.service.js";
 import { sendMailOtp } from "../utils/sendOtpMail.js";
 import { generateOTP } from "../utils/generateOTP.js";
 import jwt from "jsonwebtoken";
 import { getAge } from "../utils/ageCalulator.js";
-import { uploadToCloudinary } from "../utils/cloudinary.js";
-import { secureHeapUsed } from "crypto";
 
 const generateAccessRefreshToken = async (userId) => {
   try {
+    console.log("starting token generation");
+    console.log(userId);
     const refreshToken = await generateRefreshToken(userId);
+    console.log("generated refreh toekn");
     const accessToken = await generateAccessToken(userId);
+    console.log("generated accessToekn toekn");
+    console.log("returning toekn");
     return { accessToken, refreshToken };
   } catch (error) {
+    console.log("Actual token error", error);
     throw new ApiError(
       500,
       "Could't process the request of Generating the refresh and access Token",
@@ -60,6 +64,7 @@ const registerUser = asyncHandler(async (req, res) => {
     dob,
   );
   const userId = result.insertId;
+  console.log(userId);
   const { refreshToken, accessToken } =
     await generateAccessRefreshToken(userId);
   const createdUser = await findUserById(userId);

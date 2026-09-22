@@ -13,7 +13,7 @@ const createWoundAnalysis = async (
   const query = `
         INSERT INTO wound_analysis 
         (
-            image_id, mask_url, dice_score, new_wound_area, 
+            image_id, mask_url, prediction_confidence, new_wound_area, 
             new_healthy_area, previous_wound_area, previous_healthy_area, change_area
         )
         VALUES(?,?,?,?,?,?,?,?)

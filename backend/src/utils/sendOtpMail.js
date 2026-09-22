@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { ApiError } from "./apiError";
+import { ApiError } from "./apiError.js";
 
 const sendMailOtp = async (email, otp) => {
   const transport = nodemailer.createTransport({

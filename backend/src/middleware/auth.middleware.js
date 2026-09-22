@@ -1,5 +1,5 @@
 import { findUserById } from "../models/user.model.js";
-import { generateAccessToken } from "../service/user.services.js";
+import { generateAccessToken } from "../service/user.service.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
