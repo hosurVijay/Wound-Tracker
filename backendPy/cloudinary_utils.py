@@ -1,6 +1,11 @@
 import cloudinary
 import cloudinary.uploader
+
+from dotenv import load_dotenv
 import os
+
+
+load_dotenv()
 
 
 cloudinary.config(
@@ -12,13 +17,15 @@ cloudinary.config(
 
 def upload_mask(mask_bytes):
 
+    from io import BytesIO
+
     result = cloudinary.uploader.upload(
-        mask_bytes,
+        BytesIO(mask_bytes),
         folder="wound_tracker/masks",
         resource_type="image"
     )
 
     return {
         "url": result["secure_url"],
-        "public_id": result["public_id"]
+        "publicId": result["public_id"]
     }

@@ -2,7 +2,6 @@ import requests
 
 
 def download_image(image_url):
-
     response = requests.get(
         image_url,
         timeout=30
