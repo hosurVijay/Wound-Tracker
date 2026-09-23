@@ -66,3 +66,53 @@ def predict(request: PredictionRequest):
             status_code=500,
             detail="Wound analysis failed"
         )
+@app.get("/predict-test")
+def predict_test():
+
+    print(">>> PREDICT-TEST STARTED", flush=True)
+
+    try:
+        import numpy as np
+        import cv2
+
+        print(">>> Creating dummy image...", flush=True)
+
+        dummy_image = np.zeros(
+            (256, 256, 3),
+            dtype=np.uint8
+        )
+
+        success, encoded = cv2.imencode(
+            ".jpg",
+            dummy_image
+        )
+
+        if not success:
+            raise ValueError("Failed to create test image")
+
+        print(">>> Running model...", flush=True)
+
+        result = predict_wound_bytes(
+            encoded.tobytes()
+        )
+
+        print(">>> MODEL TEST COMPLETE", flush=True)
+
+        return {
+            "status": "model working",
+            "confidence": result["confidence"],
+            "woundArea": result["woundArea"],
+            "healthyArea": result["healthyArea"]
+        }
+
+    except Exception as error:
+
+        print(">>> MODEL TEST FAILED:", str(error), flush=True)
+
+        import traceback
+        traceback.print_exc()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
