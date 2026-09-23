@@ -1,6 +1,6 @@
 import multer from "multer";
 import path from "path";
-import fs from "fs";
+import fs, { unlink } from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { ApiError } from "../utils/apiError.js";
 import { fileURLToPath } from "url";
@@ -51,8 +51,15 @@ const processUpload = asyncHandler(async (req, res, next) => {
     req.file.publicId = result.public_id;
     next();
   } catch (error) {
-    if (fs.existsSync(req.file.path)) {
-      fs.unlink(req.file.path);
+    throw error;
+  } finally {
+    try {
+      if (fs.existsSync(req.file.path)) {
+        fs.unlink(req.file.path);
+      }
+      console.log("Temp file deleted", req.file.path);
+    } catch (eor) {
+      console.error("Failed to delete temporary file", err);
     }
   }
 });

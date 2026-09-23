@@ -26,4 +26,8 @@ app.use("/api/v1/wounds", woundRoute);
 import notificationRoute from "./routes/notification.route.js";
 app.use("/api/v1/notifications", notificationRoute);
 
+// refresh token
+import authRouter from "./routes/auth.route.js";
+app.use("/api/v1/auth", authRouter);
+
 export { app };

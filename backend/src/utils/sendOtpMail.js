@@ -68,7 +68,7 @@ const sendMailOtp = async (email, otp) => {
         console.log("INVALID ENVELOPE", err.message, err.rejected || []);
         throw new ApiError(400, "Invalid email address");
       default:
-        throw new ApiError(500, "SEND FAILED");
+        throw new ApiError(500, "SEND FAILED", err.code);
     }
   }
 };
