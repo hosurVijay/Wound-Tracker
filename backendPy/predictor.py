@@ -18,55 +18,92 @@ IMG_SIZE = 256
 THRESHOLD = 0.5
 
 
-# Load the trained wound segmentation model
-model = tf.keras.models.load_model(
-    MODEL_PATH,
-    compile=False
-)
+# Model is NOT loaded when the application starts.
+# It will be loaded only when the first prediction is requested.
+model = None
 
-print("Wound segmentation model loaded successfully.")
-print("Input shape:", model.input_shape)
-print("Output shape:", model.output_shape)
+
+def get_model():
+
+    global model
+
+    if model is None:
+
+        print(
+            ">>> Loading wound segmentation model...",
+            flush=True
+        )
+
+        model = tf.keras.models.load_model(
+            MODEL_PATH,
+            compile=False
+        )
+
+        print(
+            ">>> Wound segmentation model loaded successfully.",
+            flush=True
+        )
+
+        print(
+            ">>> Input shape:",
+            model.input_shape,
+            flush=True
+        )
+
+        print(
+            ">>> Output shape:",
+            model.output_shape,
+            flush=True
+        )
+
+    return model
 
 
 def _run_prediction(image):
-    """
-    Common inference logic.
 
-    Receives an RGB image and returns:
-    - processed image
-    - probability map
-    - binary mask
-    - wound area
-    - healthy area
-    - prediction confidence
-    """
+    # Get model only when prediction is actually requested
+    current_model = get_model()
 
+    # Resize image
     image = cv2.resize(
         image,
         (IMG_SIZE, IMG_SIZE)
     )
 
-    input_image = image.astype(
-        np.float32
-    ) / 255.0
+    # Normalize
+    input_image = (
+        image.astype(np.float32) / 255.0
+    )
 
+    # Add batch dimension
     input_tensor = np.expand_dims(
         input_image,
         axis=0
     )
 
-    prediction = model.predict(
+    print(
+        ">>> Running model prediction...",
+        flush=True
+    )
+
+    prediction = current_model.predict(
         input_tensor,
         verbose=0
     )[0]
 
+    print(
+        ">>> Model prediction completed.",
+        flush=True
+    )
+
     probability_map = prediction[:, :, 0]
 
+    # Convert probability map to binary mask
     mask = (
         probability_map >= THRESHOLD
     ).astype(np.uint8)
 
+    # Calculate wound area
     wound_area = int(
         np.sum(mask)
     )
@@ -77,6 +114,7 @@ def _run_prediction(image):
         total_pixels - wound_area
     )
 
+    # Heuristic confidence
     confidence = float(
         np.mean(
             np.maximum(
@@ -97,11 +135,6 @@ def _run_prediction(image):
 
 
 def predict_wound(image_path):
-    """
-    Run wound segmentation using a local image file.
-
-    Used mainly for local testing.
-    """
 
     image = cv2.imread(
         str(image_path)
@@ -117,16 +150,12 @@ def predict_wound(image_path):
         cv2.COLOR_BGR2RGB
     )
 
-    return _run_prediction(image)
+    return _run_prediction(
+        image
+    )
 
 
 def predict_wound_bytes(image_bytes):
-    """
-    Run wound segmentation using image bytes.
-
-    This is used by FastAPI when an image is
-    downloaded from a Cloudinary URL.
-    """
 
     image_array = np.frombuffer(
         image_bytes,
@@ -148,7 +177,10 @@ def predict_wound_bytes(image_bytes):
         cv2.COLOR_BGR2RGB
     )
 
-    return _run_prediction(image)
+    return _run_prediction(
+        image
+    )
+
 
 def mask_to_png(mask):
 

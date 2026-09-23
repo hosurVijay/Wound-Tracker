@@ -1,9 +1,44 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+
+print(
+    ">>> MAIN.PY STARTING",
+    flush=True
+)
+
+
 from image_utils import download_image
-from predictor import predict_wound_bytes, mask_to_png
+
+print(
+    ">>> image_utils IMPORTED",
+    flush=True
+)
+
+
+from predictor import (
+    predict_wound_bytes,
+    mask_to_png
+)
+
+print(
+    ">>> predictor IMPORTED",
+    flush=True
+)
+
+
 from cloudinary_utils import upload_mask
+
+print(
+    ">>> cloudinary_utils IMPORTED",
+    flush=True
+)
+
+
+print(
+    ">>> ALL IMPORTS COMPLETE",
+    flush=True
+)
 
 
 app = FastAPI(
@@ -12,70 +47,60 @@ app = FastAPI(
 )
 
 
+print(
+    ">>> FASTAPI APP CREATED",
+    flush=True
+)
+
+
 class PredictionRequest(BaseModel):
+
     imageUrl: str
 
 
 @app.get("/")
 def root():
+
+    print(
+        ">>> ROOT REQUEST RECEIVED",
+        flush=True
+    )
+
     return {
         "message": "Wound Segmentation API is running"
     }
 
 
-@app.post("/predict")
-def predict(request: PredictionRequest):
+@app.get("/health")
+def health():
 
-    try:
-        # 1. Download image from Cloudinary
-        image_bytes = download_image(
-            request.imageUrl
-        )
+    print(
+        ">>> HEALTH REQUEST RECEIVED",
+        flush=True
+    )
 
-        # 2. Run U-Net inference
-        result = predict_wound_bytes(
-            image_bytes
-        )
+    return {
+        "status": "ok"
+    }
 
-        # 3. Convert binary mask to PNG
-        mask_bytes = mask_to_png(
-            result["mask"]
-        )
 
-        # 4. Upload generated mask to Cloudinary
-        uploaded_mask = upload_mask(
-            mask_bytes
-        )
-
-        # 5. Return result to Node.js
-        return {
-            "maskUrl": uploaded_mask["url"],
-            "confidence": result["confidence"],
-            "woundArea": result["woundArea"],
-            "healthyArea": result["healthyArea"]
-        }
-
-    except Exception as error:
-
-        print(
-            "Wound prediction failed:",
-            str(error)
-        )
-
-        raise HTTPException(
-            status_code=500,
-            detail="Wound analysis failed"
-        )
 @app.get("/predict-test")
 def predict_test():
 
-    print(">>> PREDICT-TEST STARTED", flush=True)
+    print(
+        ">>> PREDICT-TEST STARTED",
+        flush=True
+    )
 
     try:
+
         import numpy as np
         import cv2
 
-        print(">>> Creating dummy image...", flush=True)
+        print(
+            ">>> Creating dummy image...",
+            flush=True
+        )
 
         dummy_image = np.zeros(
             (256, 256, 3),
@@ -88,15 +113,29 @@ def predict_test():
         )
 
         if not success:
-            raise ValueError("Failed to create test image")
 
-        print(">>> Running model...", flush=True)
+            raise ValueError(
+                "Failed to create test image"
+            )
+
+        print(
+            ">>> Dummy image created",
+            flush=True
+        )
+
+        print(
+            ">>> Running model...",
+            flush=True
+        )
 
         result = predict_wound_bytes(
             encoded.tobytes()
         )
 
-        print(">>> MODEL TEST COMPLETE", flush=True)
+        print(
+            ">>> MODEL TEST COMPLETE",
+            flush=True
+        )
 
         return {
             "status": "model working",
@@ -107,12 +146,140 @@ def predict_test():
 
     except Exception as error:
 
-        print(">>> MODEL TEST FAILED:", str(error), flush=True)
+        print(
+            ">>> MODEL TEST FAILED:",
+            str(error),
+            flush=True
+        )
 
         import traceback
+
         traceback.print_exc()
 
         raise HTTPException(
             status_code=500,
             detail=str(error)
+        )
+
+
+@app.post("/predict")
+def predict(
+    request: PredictionRequest
+):
+
+    print(
+        ">>> /predict REQUEST RECEIVED",
+        flush=True
+    )
+
+    try:
+
+        # --------------------------------
+        # 1. Download image
+        # --------------------------------
+
+        print(
+            ">>> Downloading image...",
+            flush=True
+        )
+
+        image_bytes = download_image(
+            request.imageUrl
+        )
+
+        print(
+            f">>> Image downloaded: {len(image_bytes)} bytes",
+            flush=True
+        )
+
+
+        # --------------------------------
+        # 2. Run U-Net
+        # --------------------------------
+
+        print(
+            ">>> Running U-Net inference...",
+            flush=True
+        )
+
+        result = predict_wound_bytes(
+            image_bytes
+        )
+
+        print(
+            ">>> Model prediction complete",
+            flush=True
+        )
+
+
+        # --------------------------------
+        # 3. Create mask
+        # --------------------------------
+
+        print(
+            ">>> Creating mask PNG...",
+            flush=True
+        )
+
+        mask_bytes = mask_to_png(
+            result["mask"]
+        )
+
+        print(
+            ">>> Mask PNG created",
+            flush=True
+        )
+
+
+        # --------------------------------
+        # 4. Upload mask
+        # --------------------------------
+
+        print(
+            ">>> Uploading mask to Cloudinary...",
+            flush=True
+        )
+
+        uploaded_mask = upload_mask(
+            mask_bytes
+        )
+
+        print(
+            ">>> Mask uploaded successfully",
+            flush=True
+        )
+
+
+        # --------------------------------
+        # 5. Return response
+        # --------------------------------
+
+        return {
+
+            "maskUrl": uploaded_mask["url"],
+
+            "confidence": result["confidence"],
+
+            "woundArea": result["woundArea"],
+
+            "healthyArea": result["healthyArea"]
+
+        }
+
+
+    except Exception as error:
+
+        print(
+            ">>> WOUND PREDICTION FAILED:",
+            str(error),
+            flush=True
+        )
+
+        import traceback
+
+        traceback.print_exc()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Wound analysis failed"
         )
