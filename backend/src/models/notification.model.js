@@ -78,10 +78,24 @@ const findNotificationByUserId = async (userId) => {
   return result;
 };
 
+const findNotificationByWoundId = async (woundId, userId) => {
+  const query = `
+    SELECT * FROM notifications
+    WHERE wound_id = ?
+    AND user_id = ?
+    ORDER BY createdAt DESC
+    LIMIT 1
+  `;
+
+  const [result] = await db.execute(query, [woundId, userId]);
+  return result;
+};
+
 export {
   createNotification,
   markNotificationAsRead,
   findNotificationByUserId,
   findPendingNotifications,
   markNotificationAsSent,
+  findNotificationByWoundId,
 };

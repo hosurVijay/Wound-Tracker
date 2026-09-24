@@ -163,7 +163,7 @@ const updateUserPassword = asyncHandler(async (req, res) => {
   }
 
   const hashNewPassword = await hashPassword(newPassword);
-  const result = await updatePassword(userId, hashNewPassword);
+  const result = await updatePassword(hashNewPassword, userId);
 
   if (result.affectedRows === 0) {
     throw new ApiError(500, "Failed to update password");
@@ -288,7 +288,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     sameSite: "LAX",
   });
 
-  res.clearCookie("refrehToken", {
+  res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.COOKIE_SECURE == "true",
     sameSite: "LAX",

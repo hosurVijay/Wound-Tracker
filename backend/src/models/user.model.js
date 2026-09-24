@@ -58,8 +58,8 @@ const updateUser = async (id, name, phoneNumber, dob) => {
         SET 
             name = ?,
             phoneNumber = ?,
-            date_of_birth = ?,
-        Where Id = ? ,
+            date_of_birth = ?
+        Where id = ? 
     `;
   const [res] = await db.execute(query, [name, phoneNumber, dob, id]);
 

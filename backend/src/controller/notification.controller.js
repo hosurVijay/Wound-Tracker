@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import {
   findNotificationByUserId,
+  findNotificationByWoundId,
   markNotificationAsRead,
 } from "../models/notification.model.js";
 
@@ -27,4 +28,24 @@ const markAsRead = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiError(200, "Notification marked", null));
 });
 
-export { getUserNotifications, markAsRead };
+const getWoundNotification = asyncHandler(async (req, res) => {
+  const userId = req.user?.id;
+  const { woundId } = req.params;
+  const notification = await findNotificationByWoundId(woundId, userId);
+  if (notification.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "No notificaion found for this wound", null));
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        "Wound notificaion found successfully",
+        notification[0],
+      ),
+    );
+});
+
+export { getUserNotifications, markAsRead, getWoundNotification };

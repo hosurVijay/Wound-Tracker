@@ -58,7 +58,7 @@ const processUpload = asyncHandler(async (req, res, next) => {
         fs.unlink(req.file.path);
       }
       console.log("Temp file deleted", req.file.path);
-    } catch (eor) {
+    } catch (err) {
       console.error("Failed to delete temporary file", err);
     }
   }

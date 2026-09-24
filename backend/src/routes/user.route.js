@@ -25,7 +25,7 @@ router.route("/forgot-password").post(forgotPassword);
 router.route("/verify-otp").post(verifyOtp);
 router.route("/reset-password").post(resetPassword);
 router.route("/profile").get(verifyUser, getCurrentUser);
-router.route("/upadate-profile").patch(verifyUser, updateUserDetails);
+router.route("/update-profile").patch(verifyUser, updateUserDetails);
 router
   .route("/profile-image")
   .patch(

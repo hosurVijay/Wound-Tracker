@@ -72,13 +72,13 @@ const getUserAllWounds = asyncHandler(async (req, res) => {
   const wounds = await findWoundsByUserId(userId);
   const woundsWithImages = await Promise.all(
     wounds.map(async (wound) => {
-      const images = await findImagesByWoundId(wounds.id);
+      const images = await findImagesByWoundId(wound.id);
       const imagesWithAnalysis = await Promise.all(
         images.map(async (image) => {
           const analysis = await findAnalysisByImageId(image.id);
 
           return {
-            imageId: image[0].id,
+            imageId: image.id,
             imageUrl: image.image_url,
             uploadedAt: image.uploadedAt,
 
@@ -97,7 +97,7 @@ const getUserAllWounds = asyncHandler(async (req, res) => {
 
       return {
         woundId: wound.id,
-        woundTypeL: wound.wound_type,
+        woundType: wound.wound_type,
         createdAt: wound.createdAt,
         images: imagesWithAnalysis,
       };
@@ -114,11 +114,6 @@ const getUserAllWounds = asyncHandler(async (req, res) => {
 const getWoundDetails = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
   const { woundId } = req.params;
-
-  console.log("🔥 GET WOUND DETAILS CALLED");
-  console.log("METHOD:", req.method);
-  console.log("URL:", req.originalUrl);
-  console.log("PARAMS:", req.params);
   const wound = await findWoundById(woundId);
   if (wound.length === 0) {
     throw new ApiError(404, "Wound not found");
@@ -139,7 +134,7 @@ const getWoundDetails = asyncHandler(async (req, res) => {
           analysis.length > 0
             ? {
                 analysisId: analysis[0].id,
-                maskUrl: analysis[0].maskUrl,
+                maskUrl: analysis[0].mask_url,
                 diceScore: analysis[0].dice_score,
                 woundArea: analysis[0].new_wound_area,
                 healthyArea: analysis[0].healthy_area,
@@ -160,7 +155,9 @@ const getWoundDetails = asyncHandler(async (req, res) => {
     images: imagesWithAnalysis,
   };
 
-  return res.status(201).json(201, "Wound fetched succesfully", woundPayLoad);
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Wound fetched succesfully", woundPayLoad));
 });
 
 const addWoundImage = asyncHandler(async (req, res) => {
@@ -317,11 +314,13 @@ const uploadWoundImage = asyncHandler(async (req, res) => {
       imageUrl: req.file.cloudinaryUrl,
     });
   } catch (error) {
-    console.error(
-      "FastApi wound prediction failed - retry",
-      error.response?.data || error.message,
-    );
-    throw new ApiError(502, "Wound analysis service is unavaliable");
+    console.error("ML SERVICE ERROR:");
+    console.error("Message:", error.message);
+    console.error("Status:", error.response?.status);
+    console.error("Response:", error.response?.data);
+    console.error("URL:", error.config?.url);
+
+    throw new ApiError(500, "Wound analysis service is unavailable");
   }
 
   const { maskUrl, confidence, woundArea, healthyArea } = mlResponse.data;

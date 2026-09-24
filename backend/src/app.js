@@ -6,7 +6,7 @@ const app = express();
 app.use(
   cors({
     credentials: true,
-    origin: "*",
+    origin: `${process.env.CORS_ORIGIN}`,
   }),
 );
 app.use(express.urlencoded({ limit: "16kb", extended: true }));

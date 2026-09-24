@@ -11,7 +11,7 @@ import {
 } from "../controller/wound.controller.js";
 const router = Router();
 
-router.route("/").post(verifyUser, getUserAllWounds);
+router.route("/").get(verifyUser, getUserAllWounds);
 router
   .route("/upload")
   .post(
